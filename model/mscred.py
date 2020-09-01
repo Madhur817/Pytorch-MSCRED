@@ -65,6 +65,7 @@ class Conv_LSTM(nn.Module):
         conv3_lstm_out = attention(conv3_lstm_out[0][0])
         conv4_lstm_out = self.conv4_lstm(conv4_out)
         conv4_lstm_out = attention(conv4_lstm_out[0][0])
+
         return conv1_lstm_out.unsqueeze(0), conv2_lstm_out.unsqueeze(0), conv3_lstm_out.unsqueeze(0), conv4_lstm_out.unsqueeze(0)
 
 class CnnDecoder(nn.Module):
@@ -109,7 +110,6 @@ class MSCRED(nn.Module):
         conv1_out, conv2_out, conv3_out, conv4_out = self.cnn_encoder(x)
         conv1_lstm_out, conv2_lstm_out, conv3_lstm_out, conv4_lstm_out = self.conv_lstm(
                                 conv1_out, conv2_out, conv3_out, conv4_out)
-
         gen_x = self.cnn_decoder(conv1_lstm_out, conv2_lstm_out, 
                                 conv3_lstm_out, conv4_lstm_out)
         return gen_x

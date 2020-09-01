@@ -28,7 +28,9 @@ def load_data():
 
     dataset["train"] = torch.from_numpy(np.array(train_data)).float()
     dataset["test"] = torch.from_numpy(np.array(test_data)).float()
-
+    if torch.cuda.is_available():
+        dataset["train"] = dataset["train"].cuda()
+        dataset["test"] = dataset["test"].cuda()
     dataloader = {x: torch.utils.data.DataLoader(
                                 dataset=dataset[x], batch_size=1, shuffle=shuffle[x]) 
                                 for x in splits}

@@ -110,16 +110,9 @@ axes.xaxis.set_ticks_position('bottom')
 fig.subplots_adjust(bottom=0.25)
 fig.subplots_adjust(left=0.25)
 plt.title("MSCRED", size = 25)
-plt.savefig('./outputs/anomaly_score.jpg')
+
+output_path = "./outputs/" 
+if not os.path.exists(output_path):
+	os.makedirs(output_path)
+plt.savefig(output_path+'anomaly_score.jpg')
 plt.show()
-
-
-
-
-
-
-
-
-
-
-

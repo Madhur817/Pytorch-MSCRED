@@ -1,0 +1,5 @@
+data/matrix_data
+env/
+checkpoints/
+
+*.pyc
