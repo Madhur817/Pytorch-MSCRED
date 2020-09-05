@@ -64,9 +64,12 @@ matrix_data_path = save_data_path + "matrix_data/"
 if not os.path.exists(matrix_data_path):
 	os.makedirs(matrix_data_path)
 
+cols = [1,2,3,4,6,16]
 
+import matplotlib.pyplot as plt
 def generate_signature_matrix_node():
 	data = np.array(pd.read_csv(raw_data_path, header = None), dtype=np.float64)
+	# data = data[cols,:]
 	sensor_n = data.shape[0]
 	# min-max normalization
 	max_value = np.max(data, axis=1)
@@ -125,15 +128,14 @@ def generate_train_test_data():
 				for i in range(len(win_size)):
 					multi_matrix.append(data_all[i][data_id - step_id])
 				step_multi_matrix.append(multi_matrix)
-
 			if data_id >= (train_start/gap_time + win_size[-1]/gap_time + step_max) and data_id < (train_end/gap_time): # remove start points with invalid value
 				path_temp = os.path.join(train_data_path, 'train_data_' + str(data_id))
 				np.save(path_temp, step_multi_matrix)
 			elif data_id >= (test_start/gap_time) and data_id < (test_end/gap_time):
 				path_temp = os.path.join(test_data_path, 'test_data_' + str(data_id))
 				np.save(path_temp, step_multi_matrix)
-
-			#print np.shape(step_multi_matrix)
+			# step_multi_matrix shape == step_max * len(win_size) * n * n
+			# print(np.shape(step_multi_matrix))
 
 			del step_multi_matrix[:]
 
@@ -147,5 +149,4 @@ if __name__ == '__main__':
 
 	if ts_type == "node":
 		generate_signature_matrix_node()
-
 	generate_train_test_data()

@@ -16,7 +16,8 @@ def train(dataLoader, model, optimizer, epochs, device):
 		for x in tqdm(dataLoader):
 			x = x.to(device)
 			x = x.squeeze()
-			l = torch.mean((model(x)-x[-1].unsqueeze(0))**2)
+			reconstructed_matrix,_,_,_,_= model(x)
+			l = torch.mean((reconstructed_matrix-x[-1].unsqueeze(0))**2)
 			train_l_sum += l
 			optimizer.zero_grad()
 			l.backward()
@@ -33,12 +34,16 @@ def test(dataLoader, model):
 	if not os.path.exists(reconstructed_data_path):
 		os.makedirs(reconstructed_data_path)
 	with torch.no_grad():
+
 		for x in dataLoader:
 			x = x.to(device)
 			x = x.squeeze()
-			reconstructed_matrix = model(x) 
+			reconstructed_matrix,attention_w1,attention_w2,attention_w3,attention_w4  = model(x) 
 			path_temp = os.path.join(reconstructed_data_path, 'reconstructed_data_' + str(index) + ".npy")
+			path_attention = os.path.join(reconstructed_data_path, 'attention_wts_' + str(index) + ".npy")
+			att_wt = np.array([attention_w1.cpu().detach().numpy(),attention_w2.cpu().detach().numpy(),attention_w3.cpu().detach().numpy(),attention_w4.cpu().detach().numpy()])
 			np.save(path_temp, reconstructed_matrix.cpu().detach().numpy())
+			np.save(path_attention,att_wt)
 			# l = criterion(reconstructed_matrix, x[-1].unsqueeze(0)).mean()
 			# loss_list.append(l)
 			# print("[test_index %d] [loss: %f]" % (index, l.item()))
@@ -55,14 +60,14 @@ if __name__ == '__main__':
 	# Training phase
 	# # mscred.load_state_dict(torch.load("./checkpoints/model1.pth"))
 	
-	optimizer = torch.optim.Adam(mscred.parameters(), lr = 0.0002)
-	train(dataLoader["train"], mscred, optimizer, 10, device)
+	# optimizer = torch.optim.Adam(mscred.parameters(), lr = 0.0002)
+	# train(dataLoader["train"], mscred, optimizer, 10, device)
 	
-	print("Saving model....")
-	ckpt_path =  "./checkpoints/"
-	if not os.path.exists(ckpt_path):
-		os.makedirs(ckpt_path)
-	torch.save(mscred.state_dict(),ckpt_path+"model2.pth")
+	# print("Saving model....")
+	# ckpt_path =  "./checkpoints/"
+	# if not os.path.exists(ckpt_path):
+	# 	os.makedirs(ckpt_path)
+	# torch.save(mscred.state_dict(),ckpt_path+"model2.pth")
 
 	# Test phase
 	mscred.load_state_dict(torch.load("./checkpoints/model2.pth"))

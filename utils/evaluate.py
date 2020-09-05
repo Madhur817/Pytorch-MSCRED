@@ -45,13 +45,25 @@ reconstructed_data_path = matrix_data_path + "reconstructed_data/"
 #reconstructed_data_path = matrix_data_path + "matrix_pred_data/"
 criterion = torch.nn.MSELoss()
 
+
+output_path = "./outputs/" 
+if not os.path.exists(output_path):
+	os.makedirs(output_path)
+
+attention_wts = []
+reconstructed_matrix = []
 for i in range(valid_start, test_end):
 	path_temp_1 = os.path.join(test_data_path, "test_data_" + str(i) + '.npy')
 	gt_matrix_temp = np.load(path_temp_1)
 
 	path_temp_2 = os.path.join(reconstructed_data_path, "reconstructed_data_" + str(i) + '.npy')
+	path_temp_3 = os.path.join(reconstructed_data_path, "attention_wts_" + str(i) + '.npy')
 	#path_temp_2 = os.path.join(reconstructed_data_path, "pcc_matrix_full_test_" + str(i) + '_pred_output.npy')
 	reconstructed_matrix_temp = np.load(path_temp_2)
+	attention_matrix = np.load(path_temp_3)
+	if i >= valid_end:
+		attention_wts.append(attention_matrix)
+		reconstructed_matrix.append(reconstructed_matrix_temp)
 	# reconstructed_matrix_temp = np.transpose(reconstructed_matrix_temp, [0, 3, 1, 2])
 	#print(reconstructed_matrix_temp.shape)
 	#first (short) duration scale for evaluation  
@@ -68,7 +80,12 @@ for i in range(valid_start, test_end):
 		valid_anomaly_score[i - valid_start] = num_broken
 	else:
 		test_anomaly_score[i - test_start] = num_broken
+
+attention_wts = np.array(attention_wts)
+
+
 valid_anomaly_max = np.max(valid_anomaly_score.ravel())
+print("Threshold",valid_anomaly_max*alpha)
 test_anomaly_score = test_anomaly_score.ravel()
 #print(test_anomaly_score)
 # plot anomaly score curve and identification result
@@ -88,18 +105,33 @@ for line in root_cause_f:
 	row_index += 1
 root_cause_f.close()
 
+t = np.arange(1000)
+up = 500    
+dur = 30
+down = up+dur
+for i in range(4):
+	plt.figure(figsize=(10,6))
+	ser = attention_wts[:,i,:]
+	for j in range(ser.shape[1]):
+		plt.plot(t[up:down],ser[up:down,j],label="("+str(4-j)+")")+"time_(-"+str(4-j)+")"
+	plt.legend(loc="upper right")
+	plt.savefig(output_path+"attention_layer_"+str(i+1))
+
+
 fig, axes = plt.subplots()
 #plt.plot(test_anomaly_score, 'black', linewidth = 2)
 test_num = test_end - test_start
 # plt.xticks(fontsize = 25)
 # plt.ylim((0, 100))
 # plt.yticks(np.arange(0, 101, 20), fontsize = 25)
-plt.plot(test_anomaly_score, color = 'black', linewidth = 2)
-threshold = np.full((test_num), valid_anomaly_max * alpha)
+plt.plot(test_anomaly_score[up:down], color = 'black', linewidth = 2)
+threshold = np.full((dur), valid_anomaly_max * alpha)
+# threshold = np.full((test_num), valid_anomaly_max * alpha)
+
 axes.plot(threshold, color = 'black', linestyle = '--',linewidth = 2)
-for k in range(len(anomaly_pos)):
-	axes.axvspan(anomaly_pos[k], anomaly_pos[k] + anomaly_span[k%3]/gap_time, color='red', linewidth=2)
-labels = [' ', '0e3', '2e3', '4e3', '6e3', '8e3', '10e3']
+# for k in range(len(anomaly_pos)):
+# 	axes.axvspan(anomaly_pos[k], anomaly_pos[k] + anomaly_span[k%3]/gap_time, color='red', linewidth=2)
+# labels = [' ', '0e3', '2e3', '4e3', '6e3', '8e3', '10e3']
 # axes.set_xticklabels(labels, rotation = 25, fontsize = 20)
 plt.xlabel('Test Time', fontsize = 25)
 plt.ylabel('Anomaly Score', fontsize = 25)
@@ -111,8 +143,6 @@ fig.subplots_adjust(bottom=0.25)
 fig.subplots_adjust(left=0.25)
 plt.title("MSCRED", size = 25)
 
-output_path = "./outputs/" 
-if not os.path.exists(output_path):
-	os.makedirs(output_path)
+
 plt.savefig(output_path+'anomaly_score.jpg')
 plt.show()
